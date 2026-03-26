@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google Trends Keyword Report — Flight Tracking Focus</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    line-height: 1.6;
+    padding: 0;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+    border-radius: 16px;
+    padding: 40px 36px;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  .header .subtitle {
+    font-size: 15px;
+    color: #a5b4fc;
+    font-weight: 400;
+  }
+  .header .date-badge {
+    display: inline-block;
+    margin-top: 14px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #c7d2fe;
+  }
+  .header .focus-badge {
+    display: inline-block;
+    margin-top: 14px;
+    margin-left: 8px;
+    background: rgba(99,102,241,0.3);
+    border: 1px solid rgba(99,102,241,0.5);
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #a5b4fc;
+  }
+
+  /* News Context Box */
+  .news-context {
+    background: linear-gradient(135deg, #1a1625 0%, #1e1a2e 100%);
+    border: 1px solid #3b2f63;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+  }
+  .news-context h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #c4b5fd;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .news-context h2::before { content: '📰'; }
+  .news-item {
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(139,92,246,0.1);
+    font-size: 13.5px;
+  }
+  .news-item:last-child { border-bottom: none; }
+  .news-item strong { color: #e0d4fc; }
+  .news-item span { color: #94a3b8; }
+
+  /* Stats Row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: #1a1d2e;
+    border: 1px solid #2a2d3e;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-card .num {
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #818cf8, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .stat-card .label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Executive Summary */
+  .exec-summary {
+    background: linear-gradient(135deg, #172554 0%, #1e3a5f 100%);
+    border: 1px solid #1e40af;
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+    font-size: 14px;
+    color: #bfdbfe;
+    line-height: 1.7;
+  }
+  .exec-summary h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #93c5fd;
+    margin-bottom: 10px;
+  }
+
+  /* Time-Sensitive Alerts */
+  .alert {
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 13.5px;
+  }
+  .alert-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .alert-red {
+    background: rgba(239,68,68,0.08);
+    border: 1px solid rgba(239,68,68,0.25);
+  }
+  .alert-red .alert-title { color: #fca5a5; }
+  .alert-amber {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.25);
+  }
+  .alert-amber .alert-title { color: #fcd34d; }
+  .alert-title { font-weight: 700; margin-bottom: 2px; }
+  .alert-desc { color: #94a3b8; }
+  .alerts-section { margin-bottom: 28px; }
+  .alerts-section h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f87171;
+    margin-bottom: 14px;
+  }
+
+  /* Keyword Cards */
+  .keywords-section { margin-bottom: 36px; }
+  .keywords-section > h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #e2e8f0;
+  }
+  .kw-card {
+    background: #1a1d2e;
+    border: 1px solid #2a2d3e;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+  .kw-card:hover { border-color: #4338ca; }
+  .kw-card.priority-write-now { border-left: 4px solid #ef4444; }
+  .kw-card.priority-audit { border-left: 4px solid #f59e0b; }
+  .kw-card.priority-high { border-left: 4px solid #f59e0b; }
+  .kw-card.priority-medium { border-left: 4px solid #6b7280; }
+  .kw-card.priority-evergreen { border-left: 4px solid #4b5563; }
+  .kw-rank {
+    font-size: 14px;
+    font-weight: 700;
+    color: #475569;
+    min-width: 24px;
+    text-align: center;
+  }
+  .kw-body { flex: 1; min-width: 0; }
+  .kw-term {
+    font-size: 15px;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+  }
+  .kw-note {
+    font-size: 12.5px;
+    color: #94a3b8;
+    line-height: 1.5;
+  }
+  .kw-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  /* Growth badges */
+  .badge-breakout { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+  .badge-high-growth { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+  .badge-mod-growth { background: rgba(34,197,94,0.12); color: #86efac; border: 1px solid rgba(34,197,94,0.25); }
+  .badge-low-growth { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+  /* Content type badges */
+  .badge-crisis { background: rgba(239,68,68,0.1); color: #fca5a5; }
+  .badge-airport { background: rgba(249,115,22,0.1); color: #fdba74; }
+  .badge-airline { background: rgba(236,72,153,0.1); color: #f9a8d4; }
+  .badge-product { background: rgba(6,182,212,0.1); color: #67e8f9; }
+  .badge-destination { background: rgba(34,197,94,0.1); color: #86efac; }
+  .badge-visa { background: rgba(168,85,247,0.1); color: #d8b4fe; }
+  .badge-seasonal { background: rgba(251,146,60,0.1); color: #fdba74; }
+  .badge-listicle { background: rgba(56,189,248,0.1); color: #7dd3fc; }
+  /* Priority badges */
+  .badge-priority-wn { background: rgba(239,68,68,0.2); color: #fca5a5; font-weight: 700; }
+  .badge-priority-audit { background: rgba(245,158,11,0.2); color: #fcd34d; font-weight: 700; }
+  .badge-priority-high { background: rgba(245,158,11,0.12); color: #fde68a; }
+  .badge-priority-med { background: rgba(100,116,139,0.15); color: #cbd5e1; }
+  .badge-priority-eg { background: rgba(71,85,105,0.15); color: #94a3b8; }
+  /* News-derived badge */
+  .badge-news { background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.3); font-size: 10px; }
+
+  /* Thematic Clusters */
+  .clusters-section { margin-bottom: 36px; }
+  .clusters-section > h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #e2e8f0;
+  }
+  .clusters-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .cluster-card {
+    background: #1a1d2e;
+    border: 1px solid #2a2d3e;
+    border-radius: 12px;
+    padding: 20px 22px;
+  }
+  .cluster-card h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 6px;
+  }
+  .cluster-desc {
+    font-size: 12.5px;
+    color: #94a3b8;
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .cluster-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cluster-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(99,102,241,0.08);
+    border: 1px solid rgba(99,102,241,0.2);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    color: #a5b4fc;
+  }
+  .cluster-tag .growth {
+    color: #fcd34d;
+    font-weight: 600;
+    font-size: 10.5px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 24px 0 0;
+    border-top: 1px solid #2a2d3e;
+    color: #475569;
+    font-size: 12px;
+  }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .clusters-grid { grid-template-columns: 1fr; }
+    .kw-card { flex-direction: column; align-items: flex-start; }
+    .kw-meta { justify-content: flex-start; margin-top: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Google Trends Keyword Report</h1>
+    <div class="subtitle">Wego Blog — Rising flight tracking queries you should write about</div>
+    <div class="date-badge">📅 26 March 2026</div>
+    <div class="focus-badge">✈️ Focus: Flight Tracking</div>
+  </div>
+
+  <!-- NEWS CONTEXT -->
+  <div class="news-context">
+    <h2>News Context Driving These Trends</h2>
+    <div class="news-item"><strong>Middle East conflict disrupts Gulf aviation</strong> — <span>Iran war and airspace closures are driving massive spikes in flight tracking searches from MENA. UAE, Qatar, Bahrain are top searching regions. Strait of Hormuz closure impacting fuel and routes.</span></div>
+    <div class="news-item"><strong>Flighty launches "Airport Intelligence" update</strong> — <span>Major flight tracker app update (24 March 2026) with real-time airport disruption alerts across 14,000 airports, fuelling "best flight tracker app" searches.</span></div>
+    <div class="news-item"><strong>Spring break 2026 sets travel records</strong> — <span>~171M passengers expected March–April. Mass cancellations across US (413 cancelled, 2,763 delayed in one day) and Asia-Pacific (1,400+ delays). Flight status queries spiking.</span></div>
+    <div class="news-item"><strong>Dubai, Abu Dhabi & Sharjah airports under pressure</strong> — <span>All three UAE airports trending heavily for flight status checks as regional conflict creates rolling cancellations and schedule changes.</span></div>
+    <div class="news-item"><strong>American Airlines launches delay transparency platform</strong> — <span>New digital tool explains flight delays in real-time — signals growing consumer demand for flight information and transparency tools.</span></div>
+  </div>
+
+  <!-- STATS ROW -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="num">8</div>
+      <div class="label">Urgent Keywords</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">32</div>
+      <div class="label">Total Keywords</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">6</div>
+      <div class="label">Thematic Clusters</div>
+    </div>
+    <div class="stat-card">
+      <div class="num">19</div>
+      <div class="label">News-Derived</div>
+    </div>
+  </div>
+
+  <!-- EXECUTIVE SUMMARY -->
+  <div class="exec-summary">
+    <h2>Executive Summary</h2>
+    Flight tracking search demand is surging globally, driven primarily by the Middle East conflict disrupting Gulf airspace and a record-breaking spring break travel surge. The biggest opportunity cluster is around UAE airport flight status — Dubai, Abu Dhabi, and Sharjah airports are all spiking +250–450%. Airline-specific tracking queries for Emirates, Etihad, flydubai, and flynas are growing rapidly, mapping perfectly to Wego's MENA audience. There is also a strong product content opportunity around "best flight tracker apps" and "how to track a flight" — ideal for Wego flight tracker promotion. The "uae airspace" query at +4,250% signals a crisis-content opportunity that should be acted on immediately.
+  </div>
+
+  <!-- TIME-SENSITIVE ALERTS -->
+  <div class="alerts-section">
+    <h2>⏰ Time-Sensitive Alerts</h2>
+    <div class="alert alert-red">
+      <div class="alert-icon">🚨</div>
+      <div>
+        <div class="alert-title">PUBLISH NOW: "UAE Airspace" Status Article</div>
+        <div class="alert-desc">+4,250% growth on Flightradar24 related queries. People are searching for UAE airspace closure/status info amid the Iran conflict. Write or update an airspace status guide immediately.</div>
+      </div>
+    </div>
+    <div class="alert alert-red">
+      <div class="alert-icon">🚨</div>
+      <div>
+        <div class="alert-title">PUBLISH NOW: Dubai Airport Flight Status Guide</div>
+        <div class="alert-desc">"dubai airport flight status" +400%, "dubai airport flight status today" +400%, "dubai airport departures" +350%. Massive demand — publish a live-updated Dubai airport status tracker article.</div>
+      </div>
+    </div>
+    <div class="alert alert-red">
+      <div class="alert-icon">🚨</div>
+      <div>
+        <div class="alert-title">AUDIT: Emirates Flight Status Articles</div>
+        <div class="alert-desc">"emirates flight status" +200%, "emirates flight status live tracking" +60%, "emirates flight status today" +200%. Multiple queries confirm sustained demand. Ensure existing Emirates content is current.</div>
+      </div>
+    </div>
+    <div class="alert alert-amber">
+      <div class="alert-icon">⚡</div>
+      <div>
+        <div class="alert-title">HIGH PRIORITY: Best Flight Tracker Apps Listicle</div>
+        <div class="alert-desc">"flight radar 24 app" +600%, "flightradar24 app" +130%, "best flight tracker app" rising. Perfect vehicle to promote Wego's flight tracker alongside Flightradar24, Flighty, FlightAware.</div>
+      </div>
+    </div>
+    <div class="alert alert-amber">
+      <div class="alert-icon">⚡</div>
+      <div>
+        <div class="alert-title">HIGH PRIORITY: Abu Dhabi & Sharjah Airport Status</div>
+        <div class="alert-desc">"abu dhabi airport flight status" +300%, "sharjah airport flight status" +250%. Both airports seeing crisis-level search demand — write airport status guides if none exist.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRIORITIZED KEYWORDS LIST -->
+  <div class="keywords-section">
+    <h2>Prioritized Keywords</h2>
+
+    <!-- #1 -->
+    <div class="kw-card priority-write-now">
+      <div class="kw-rank">1</div>
+      <div class="kw-body">
+        <div class="kw-term">uae airspace</div>
+        <div class="kw-note">Massive spike driven by Iran conflict. People checking if UAE airspace is open/closed. Write an "Is UAE Airspace Open?" guide with live updates, airline impacts, and flight rerouting info.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-breakout">+4,250%</span>
+        <span class="badge badge-crisis">Crisis / Airspace</span>
+        <span class="badge badge-priority-wn">Write Now</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #2 -->
+    <div class="kw-card priority-write-now">
+      <div class="kw-rank">2</div>
+      <div class="kw-body">
+        <div class="kw-term">dubai airport flight status</div>
+        <div class="kw-note">Core MENA search. Combine with "dubai airport flight status today" (+400%) and "dubai airport departures" (+350%). Create a comprehensive Dubai airport live status page.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-breakout">+400%</span>
+        <span class="badge badge-airport">Airport Status</span>
+        <span class="badge badge-priority-wn">Write Now</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #3 -->
+    <div class="kw-card priority-write-now">
+      <div class="kw-rank">3</div>
+      <div class="kw-body">
+        <div class="kw-term">dubai airport flight status today</div>
+        <div class="kw-note">High-intent, time-sensitive query. Can be captured by a single, frequently updated article targeting both "today" and general status queries for DXB.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-breakout">+400%</span>
+        <span class="badge badge-airport">Airport Status</span>
+        <span class="badge badge-priority-wn">Write Now</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #4 -->
+    <div class="kw-card priority-write-now">
+      <div class="kw-rank">4</div>
+      <div class="kw-body">
+        <div class="kw-term">flightradar24 iran</div>
+        <div class="kw-note">People using Flightradar24 to track flights over Iran. Wego can capture this with a "Flights Over Iran: Live Tracking & Status" article linking to Wego's flight tracker.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+650%</span>
+        <span class="badge badge-crisis">Crisis / Airspace</span>
+        <span class="badge badge-priority-wn">Write Now</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #5 -->
+    <div class="kw-card priority-write-now">
+      <div class="kw-rank">5</div>
+      <div class="kw-body">
+        <div class="kw-term">flight radar 24 app</div>
+        <div class="kw-note">Huge demand for flight tracking apps right now (+600%). Write a "Best Flight Tracker Apps 2026" listicle comparing Flightradar24, Flighty, FlightAware, FlightElite — and feature Wego's tracker.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+600%</span>
+        <span class="badge badge-product">Wego Product</span>
+        <span class="badge badge-priority-wn">Write Now</span>
+      </div>
+    </div>
+
+    <!-- #6 -->
+    <div class="kw-card priority-write-now">
+      <div class="kw-rank">6</div>
+      <div class="kw-body">
+        <div class="kw-term">emirates manage booking</div>
+        <div class="kw-note">Travellers scrambling to change Emirates bookings due to disruptions. A "How to Manage Your Emirates Booking" guide with rebooking/refund steps is timely and high-converting.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-breakout">+450%</span>
+        <span class="badge badge-airline">Airline Guide</span>
+        <span class="badge badge-priority-wn">Write Now</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #7 -->
+    <div class="kw-card priority-write-now">
+      <div class="kw-rank">7</div>
+      <div class="kw-body">
+        <div class="kw-term">dubai airport</div>
+        <div class="kw-note">Broad query spiking at +450% (flight status seed) and +400% (flightradar24 seed). Anchor keyword for a comprehensive "Dubai Airport Guide: Status, Terminals, Flights" article.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-breakout">+450%</span>
+        <span class="badge badge-airport">Airport Status</span>
+        <span class="badge badge-priority-wn">Write Now</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #8 -->
+    <div class="kw-card priority-write-now">
+      <div class="kw-rank">8</div>
+      <div class="kw-body">
+        <div class="kw-term">dubai airport departures</div>
+        <div class="kw-note">People checking if their departing flights are operating from DXB. Can be targeted within the Dubai airport status article or as a standalone departures tracker page.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+350%</span>
+        <span class="badge badge-airport">Airport Status</span>
+        <span class="badge badge-priority-wn">Write Now</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #9 -->
+    <div class="kw-card priority-audit">
+      <div class="kw-rank">9</div>
+      <div class="kw-body">
+        <div class="kw-term">abu dhabi airport flight status</div>
+        <div class="kw-note">Abu Dhabi airport search demand rising sharply. If you have an existing AUH status article, audit and update it. If not, create one — "Is Abu Dhabi Airport Open?".</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+300%</span>
+        <span class="badge badge-airport">Airport Status</span>
+        <span class="badge badge-priority-audit">Audit</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #10 -->
+    <div class="kw-card priority-audit">
+      <div class="kw-rank">10</div>
+      <div class="kw-body">
+        <div class="kw-term">emirates airlines flight status</div>
+        <div class="kw-note">Variant of "emirates flight status" — combined with "emirates flight status today" (+200%) and "emirates flight status dubai" (+160%). Ensure Emirates coverage is comprehensive.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+250%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-audit">Audit</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #11 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">11</div>
+      <div class="kw-body">
+        <div class="kw-term">sharjah airport flight status</div>
+        <div class="kw-note">Sharjah airport (+250%) getting significant crisis-driven traffic. Smaller airport but serves budget airlines — write a "Sharjah Airport Flight Status" guide targeting Air Arabia passengers.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+250%</span>
+        <span class="badge badge-airport">Airport Status</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #12 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">12</div>
+      <div class="kw-body">
+        <div class="kw-term">abu dhabi airport</div>
+        <div class="kw-note">Broader query for AUH info. Target alongside "abu dhabi airport flight status" in a single comprehensive article covering status, terminals, and current disruptions.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+250%</span>
+        <span class="badge badge-airport">Airport Status</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #13 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">13</div>
+      <div class="kw-body">
+        <div class="kw-term">sharjah airport</div>
+        <div class="kw-note">Broader airport query. Pair with "sharjah airport flight status" for a single airport guide. Air Arabia is the primary carrier — mention their specific status.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+250%</span>
+        <span class="badge badge-airport">Airport Status</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #14 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">14</div>
+      <div class="kw-body">
+        <div class="kw-term">flight radar 24</div>
+        <div class="kw-note">Brand search for Flightradar24 — rising +250% from "flight tracker app" and +100% from "track my flight" seeds. Capture with a "Flightradar24 Alternatives" or "How to Use Flight Trackers" article.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+250%</span>
+        <span class="badge badge-product">Wego Product</span>
+        <span class="badge badge-priority-high">High Priority</span>
+      </div>
+    </div>
+
+    <!-- #15 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">15</div>
+      <div class="kw-body">
+        <div class="kw-term">emirates flight status</div>
+        <div class="kw-note">Confirmed across multiple seeds: +200% (flight status), +400% (flightradar24), +250% (flight tracker app). Core demand keyword. Ensure existing Emirates crisis article ranks for this.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+200%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #16 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">16</div>
+      <div class="kw-body">
+        <div class="kw-term">emirates flight status today</div>
+        <div class="kw-note">Time-sensitive variant. Ensure the Emirates article includes "today" in headings or has a dynamic "latest updates" section to capture this query.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+200%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #17 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">17</div>
+      <div class="kw-body">
+        <div class="kw-term">etihad flight status</div>
+        <div class="kw-note">+200% from flight status seed, +80% from flight tracking seed. Etihad is another core Wego airline. Update or create an Etihad flight status/crisis guide.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-high-growth">+200%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #18 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">18</div>
+      <div class="kw-body">
+        <div class="kw-term">emirates</div>
+        <div class="kw-note">Broad brand query at +190%. People searching for Emirates status/news. Wego's Emirates content should be well-optimised to capture brand-adjacent traffic.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+190%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #19 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">19</div>
+      <div class="kw-body">
+        <div class="kw-term">mh cargo tracking</div>
+        <div class="kw-note">Malaysia Airlines cargo tracking at +180%. Niche but actionable — a cargo tracking guide could capture this query if it aligns with Wego's audience in Southeast Asia.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+180%</span>
+        <span class="badge badge-airline">Airline Guide</span>
+        <span class="badge badge-priority-high">High Priority</span>
+      </div>
+    </div>
+
+    <!-- #20 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">20</div>
+      <div class="kw-body">
+        <div class="kw-term">flydubai flight status</div>
+        <div class="kw-note">+180% growth. flydubai is a key UAE budget carrier. With "flydubai" also at +180% and "fly dubai" at +150%, create or update a flydubai flight status guide.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+180%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #21 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">21</div>
+      <div class="kw-body">
+        <div class="kw-term">etihad flight status today</div>
+        <div class="kw-note">Time-sensitive variant at +180%. Pair with "etihad airways" (+60%) for a comprehensive Etihad crisis/status guide.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+180%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #22 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">22</div>
+      <div class="kw-body">
+        <div class="kw-term">dubai to delhi flight status today</div>
+        <div class="kw-note">Route-specific query at +170%. High intent — people with actual tickets checking their specific route. Could be targeted in a "Dubai to India Flight Status" article covering key routes.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+170%</span>
+        <span class="badge badge-destination">Route Status</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #23 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">23</div>
+      <div class="kw-body">
+        <div class="kw-term">radar24 flight tracking</div>
+        <div class="kw-note">Alternative spelling of Flightradar24 at +160%. Capture with a "How to Track Flights with Flightradar24" article that also promotes Wego's flight tracker.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+160%</span>
+        <span class="badge badge-product">Wego Product</span>
+        <span class="badge badge-priority-high">High Priority</span>
+      </div>
+    </div>
+
+    <!-- #24 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">24</div>
+      <div class="kw-body">
+        <div class="kw-term">emirates flight status dubai</div>
+        <div class="kw-note">Location-specific variant at +160%. Can be targeted within the main Emirates flight status article with a dedicated "Departing from Dubai" section.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+160%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #25 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">25</div>
+      <div class="kw-body">
+        <div class="kw-term">flight aware</div>
+        <div class="kw-note">FlightAware brand search — Breakout from "how to track a flight" and +150% from "live flight tracker". Include in the "Best Flight Tracker Apps" listicle.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+150%</span>
+        <span class="badge badge-product">Wego Product</span>
+        <span class="badge badge-priority-high">High Priority</span>
+      </div>
+    </div>
+
+    <!-- #26 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">26</div>
+      <div class="kw-body">
+        <div class="kw-term">emirates flight tracker live map</div>
+        <div class="kw-note">People want a visual live map of Emirates flights — at +140%. Can be addressed in a "Track Emirates Flights Live" article embedding or linking to tracking tools.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+140%</span>
+        <span class="badge badge-product">Wego Product</span>
+        <span class="badge badge-priority-high">High Priority</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #27 -->
+    <div class="kw-card priority-high">
+      <div class="kw-rank">27</div>
+      <div class="kw-body">
+        <div class="kw-term">flightradar24 app</div>
+        <div class="kw-note">+130% growth. People searching specifically for the app. Target in the "Best Flight Tracker Apps 2026" listicle with a detailed Flightradar24 review section.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+130%</span>
+        <span class="badge badge-product">Wego Product</span>
+        <span class="badge badge-priority-high">High Priority</span>
+      </div>
+    </div>
+
+    <!-- #28 -->
+    <div class="kw-card priority-medium">
+      <div class="kw-rank">28</div>
+      <div class="kw-body">
+        <div class="kw-term">emirates flight status live tracking</div>
+        <div class="kw-note">Specific long-tail at +60%. Low competition, high intent. Can be captured with a dedicated "Track Your Emirates Flight Live" section within the Emirates article.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+60%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-med">Medium</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #29 -->
+    <div class="kw-card priority-medium">
+      <div class="kw-rank">29</div>
+      <div class="kw-body">
+        <div class="kw-term">flynas</div>
+        <div class="kw-note">Saudi budget carrier at +90%. Rising likely due to Saudi domestic travel demand and regional disruptions. Create a "flynas Flight Status" or "flynas Cancellation Guide".</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-mod-growth">+90%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-med">Medium</span>
+      </div>
+    </div>
+
+    <!-- #30 -->
+    <div class="kw-card priority-medium">
+      <div class="kw-rank">30</div>
+      <div class="kw-body">
+        <div class="kw-term">emirates flight tracker</div>
+        <div class="kw-note">+60% growth. People specifically wanting to track Emirates planes. Good secondary keyword for the Emirates flight status article.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-low-growth">+60%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-med">Medium</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+    <!-- #31 -->
+    <div class="kw-card priority-evergreen">
+      <div class="kw-rank">31</div>
+      <div class="kw-body">
+        <div class="kw-term">qatar airways flight status</div>
+        <div class="kw-note">+50% growth. Steady demand for Qatar Airways tracking. Evergreen article opportunity — "Qatar Airways Flight Status: How to Check & Track Your Flight".</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-low-growth">+50%</span>
+        <span class="badge badge-airline">Airline Status</span>
+        <span class="badge badge-priority-eg">Evergreen</span>
+      </div>
+    </div>
+
+    <!-- #32 -->
+    <div class="kw-card priority-evergreen">
+      <div class="kw-rank">32</div>
+      <div class="kw-body">
+        <div class="kw-term">flight tracker dubai</div>
+        <div class="kw-note">+80% growth. Location-specific flight tracking demand. Can be covered within the Dubai Airport status article or a dedicated "Track Flights from Dubai" page.</div>
+      </div>
+      <div class="kw-meta">
+        <span class="badge badge-low-growth">+80%</span>
+        <span class="badge badge-product">Wego Product</span>
+        <span class="badge badge-priority-eg">Evergreen</span>
+        <span class="badge badge-news">News-derived</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- THEMATIC CLUSTERS -->
+  <div class="clusters-section">
+    <h2>Thematic Clusters</h2>
+    <div class="clusters-grid">
+
+      <div class="cluster-card">
+        <h3>🏗️ UAE Airport Status Hub</h3>
+        <div class="cluster-desc">All three major UAE airports are surging in search demand due to the regional conflict. One hub article per airport, or a combined "UAE Airports Flight Status" guide.</div>
+        <div class="cluster-tags">
+          <span class="cluster-tag">dubai airport flight status <span class="growth">+400%</span></span>
+          <span class="cluster-tag">abu dhabi airport flight status <span class="growth">+300%</span></span>
+          <span class="cluster-tag">sharjah airport flight status <span class="growth">+250%</span></span>
+          <span class="cluster-tag">dubai airport departures <span class="growth">+350%</span></span>
+          <span class="cluster-tag">dubai airport <span class="growth">+450%</span></span>
+        </div>
+      </div>
+
+      <div class="cluster-card">
+        <h3>✈️ Emirates Flight Tracking</h3>
+        <div class="cluster-desc">Emirates dominates the flight status queries — 8 distinct rising queries. One comprehensive "Emirates Flight Status & Live Tracker" article can target all of them.</div>
+        <div class="cluster-tags">
+          <span class="cluster-tag">emirates flight status <span class="growth">+200%</span></span>
+          <span class="cluster-tag">emirates airlines flight status <span class="growth">+250%</span></span>
+          <span class="cluster-tag">emirates flight status today <span class="growth">+200%</span></span>
+          <span class="cluster-tag">emirates flight tracker live map <span class="growth">+140%</span></span>
+          <span class="cluster-tag">emirates manage booking <span class="growth">+450%</span></span>
+        </div>
+      </div>
+
+      <div class="cluster-card">
+        <h3>🌍 Middle East Airspace Crisis</h3>
+        <div class="cluster-desc">The Iran conflict is generating crisis-level search demand around airspace status and safety. Time-critical content that needs immediate publishing.</div>
+        <div class="cluster-tags">
+          <span class="cluster-tag">uae airspace <span class="growth">+4,250%</span></span>
+          <span class="cluster-tag">flightradar24 iran <span class="growth">+650%</span></span>
+          <span class="cluster-tag">Airspace (topic) <span class="growth">+2,600%</span></span>
+          <span class="cluster-tag">Middle East (topic) <span class="growth">+750%</span></span>
+        </div>
+      </div>
+
+      <div class="cluster-card">
+        <h3>📱 Flight Tracker Apps</h3>
+        <div class="cluster-desc">Rising demand for flight tracking tools — perfect vehicle to promote Wego's flight tracker. A "Best Flight Tracker Apps 2026" listicle captures multiple queries.</div>
+        <div class="cluster-tags">
+          <span class="cluster-tag">flight radar 24 app <span class="growth">+600%</span></span>
+          <span class="cluster-tag">flightradar24 app <span class="growth">+130%</span></span>
+          <span class="cluster-tag">flight aware <span class="growth">Breakout</span></span>
+          <span class="cluster-tag">radar24 flight tracking <span class="growth">+160%</span></span>
+          <span class="cluster-tag">hopper <span class="growth">+60%</span></span>
+        </div>
+      </div>
+
+      <div class="cluster-card">
+        <h3>🛫 Gulf Airline Status</h3>
+        <div class="cluster-desc">Beyond Emirates, other Gulf carriers are seeing elevated flight status searches. Each can be a standalone article or section within a broader "Gulf Airlines Status" hub.</div>
+        <div class="cluster-tags">
+          <span class="cluster-tag">etihad flight status <span class="growth">+200%</span></span>
+          <span class="cluster-tag">etihad flight status today <span class="growth">+180%</span></span>
+          <span class="cluster-tag">flydubai flight status <span class="growth">+180%</span></span>
+          <span class="cluster-tag">flynas <span class="growth">+90%</span></span>
+          <span class="cluster-tag">qatar airways flight status <span class="growth">+50%</span></span>
+        </div>
+      </div>
+
+      <div class="cluster-card">
+        <h3>🛣️ Route-Specific Tracking</h3>
+        <div class="cluster-desc">Specific flight routes and flight numbers are trending — indicates travellers with actual tickets checking their specific journeys amid disruptions.</div>
+        <div class="cluster-tags">
+          <span class="cluster-tag">dubai to delhi flight status today <span class="growth">+170%</span></span>
+          <span class="cluster-tag">ey22 flight tracker live <span class="growth">+300%</span></span>
+          <span class="cluster-tag">ek241 flight status <span class="growth">+170%</span></span>
+          <span class="cluster-tag">flight tracker dubai <span class="growth">+80%</span></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <p>Data source: Google Trends (trends.google.com) · Worldwide · Past 90 days & Past 7 days</p>
+    <p style="margin-top:4px;">Seed keywords: "flight tracking", "flight status", "track my flight", "flight tracker app", "live flight tracker", "flightradar24", "how to track a flight"</p>
+    <p style="margin-top:4px;">Research date: 26 March 2026 · Report generated for blog.wego.com</p>
+  </div>
+
+</div>
+</body>
+</html>
